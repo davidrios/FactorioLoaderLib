@@ -1,4 +1,5 @@
 local Loader = {}
+-- local pretty = require 'pl.pretty'
 
 require("library/factorioglobals")
 
@@ -34,7 +35,9 @@ function Loader.load_data(game_path, mod_dir)
     for i = 1, #paths do
         Loader.addModuleInfo(paths[i], module_info)
     end
+
     local modlist = Loader.getModList(mod_dir)
+
     for filename in lfs.dir(mod_dir) do
         local mod_name = string.gsub(filename, "(.+)_[^_]+", "%1")
         if modlist[mod_name] ~= nil then
@@ -43,6 +46,19 @@ function Loader.load_data(game_path, mod_dir)
                 module_info[mod_name] = info
             else
                 error("Loading unzipped mods is not supported at the moment.")
+            end
+        end
+    end
+
+    for modname, _ in pairs(modlist) do
+        local mod = module_info[modname]
+        if mod ~= nil then
+            mod.dep_modules = {}
+            for _, depname in ipairs(mod.dependencies) do
+                local dependency = parse_dependency(depname)
+                if dependency.type == 1 then
+                    mod.dep_modules[dependency.name] = module_info[dependency.name]
+                end
             end
         end
     end
@@ -138,7 +154,7 @@ local function string_trim(s)
   return (s:gsub("^%s*(.-)%s*$", "%1"))
 end
 
-local function parse_dependency(dep_string)
+function parse_dependency(dep_string)
     local dependency = {}
     local first_char = string.sub(dep_string, 1, 1)
     local start_idx_name_part
@@ -299,7 +315,7 @@ function ZipModule.new(dirname, mod_name)
     return info
 end
 function ZipModule.run(self, filename)
-    local loader = ZipModLoader.new(self.mod_path, self.mod_name, self.arc_subfolder)
+    local loader = ZipModLoader.new(self.mod_path, self.mod_name, self.arc_subfolder, self.name, self.dep_modules)
     table.insert(package.searchers, 1, loader)
     local mod = loader(filename)
     if type(mod) == "string" then
