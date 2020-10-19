@@ -1,5 +1,5 @@
-local Loader = {}
 -- local pretty = require 'pl.pretty'
+local Loader = {}
 
 require("library/factorioglobals")
 
@@ -76,6 +76,17 @@ function Loader.load_data(game_path, mod_dir)
     for _, module_name in ipairs(order) do
         local info = module_info[module_name]
         info:locale(locales)
+    end
+
+    for _, locale in pairs(locales) do
+        for cat, data in pairs(locale) do
+            for key, val in pairs(data) do
+                tkey = key:gsub("^%s*(.-)%s*$", "%1")
+                if tkey ~= key then
+                    data[tkey] = val
+                end
+            end
+        end
     end
 
     -- loop over all order
