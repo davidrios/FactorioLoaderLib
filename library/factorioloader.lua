@@ -89,6 +89,21 @@ function Loader.load_data(game_path, mod_dir)
         end
     end
 
+    local item_pattern = '__ITEM__([a-z0-9-]+)__'
+    for _, locale in pairs(locales) do
+        for cat, data in pairs(locale) do
+            for key, val in pairs(data) do
+                local item_val = string.match(val, item_pattern)
+                if item_val ~= nil then
+                    local correct_name = locale['item-name'][item_val]
+                    if correct_name ~= nil then
+                        data[key] = string.gsub(val, item_pattern, correct_name)
+                    end
+                end
+            end
+        end
+    end
+
     -- loop over all order
     local inited = false
     for _, filename in ipairs(filenames) do
